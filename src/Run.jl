@@ -1,7 +1,10 @@
 module PPredict
 using PPredict, Plots
 
-S = Params(F=6.0, res_size=300, shift=1.0);
+S = Params(F=5.5, res_size=300, shift=0.5);
+S = Params(F=5.5, res_size=30, shift=0.5, T=1000.0);
+
+S = Params(F=5.5, res_size=50, shift=2.0, T=5000.0);
 input_data, esn, mach, target_train, target_test, y_train, y_test = predict_driver(S);
 best(mach)
 

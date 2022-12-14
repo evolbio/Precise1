@@ -65,7 +65,9 @@ end
 
 function plot_train_test(target_train, target_test, y_train, y_test)
 	pl=plot(size=(1500,900),layout=(2,1),legend=:none)
-	obs = Int(round((2/3)*length(target_test)))
+	obs1 = Int(round((2/3)*length(target_test)))
+	obs2 = 2000
+	obs = obs1 > obs2 ? obs2 : obs1
 	ind_train = length(target_train)-obs:length(target_train)
 	ind_test = length(target_test)-obs:length(target_test)
 	time_train = 0.01*ind_train
