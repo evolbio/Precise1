@@ -1,6 +1,9 @@
 module Machines
-using DataFrames, MLJ, MLJScikitLearnInterface, MLJParticleSwarmOptimization, Printf,
+using DataFrames, MLJ, MLJParticleSwarmOptimization, Printf,
 		Suppressor
+import MLJScikitLearnInterface: BayesianRidgeRegressor as BRR
+include("SKRidge.jl")
+using .SKRidge
 export brr_fit_tune, best, split_train_test
 
 # esn states come with rows as features and columns as samples
@@ -18,7 +21,7 @@ Boolean, :compute_score, :fit_intercept, :normalize, :copy_X, :verbose (false)
 =#
 function brr_fit_tune(states::AbstractArray{Float64}, target::AbstractArray{Float64};
 				train_frac=0.7)
-	brr = BayesianRidgeRegressor()
+	brr = BRR()
 	X = matrix_to_dataframe(states)
 	y = target
 	#println("type of X = ", scitype(X))	# should be Table{AbstractVector{Continuous}}
@@ -53,7 +56,13 @@ function brr_fit_tune(states::AbstractArray{Float64}, target::AbstractArray{Floa
 	end
 	y_train = predict(mach, X[train,:])
 	y_test = train_frac < 1.0 ? predict(mach, X[test,:]) : nothing
-	return mach, y_train, y_test
+	# now do same fit and predict via ScikitLearn to get std dev of predictions
+	y_train2, y_train_std, y_test2, y_test_std = SKRidge.sk_brr(report(mach).best_model,
+						Matrix(X[train,:]), Matrix(X[test,:]), y[train])
+	# check that direct call to ScikitLearn gives same predicted values
+	@assert y_train==y_train2
+	@assert y_test==y_test2
+	return mach, y_train, y_train_std, y_test, y_test_std
 end
 
 function split_train_test(data, train_frac)

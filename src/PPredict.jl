@@ -57,10 +57,12 @@ function predict_driver(S)
 	# time dim should be same for input and target
 	@assert size(input_data,2) == size(target_data,1)
 	esn = make_esn(S, input_data)			#build ESN struct
-	mach, y_train, y_test = train_p(S, input_data, target_data, esn)
+	mach, y_train, y_train_std, y_test, y_test_std =
+						train_p(S, input_data, target_data, esn)
 	target_train, target_test = split_train_test(target_data, S.train_frac);
 	plot_train_test(target_train, target_test, y_train, y_test)
-	input_data, esn, mach, target_train, target_test, y_train, y_test
+	input_data, esn, mach, target_train, target_test, y_train, y_train_std,
+						y_test, y_test_std
 end
 
 function plot_train_test(target_train, target_test, y_train, y_test)
@@ -80,7 +82,8 @@ function plot_train_test(target_train, target_test, y_train, y_test)
 end
 
 function train_p(S, input_data, target_data, esn)
-	mach, y_train, y_test = brr_fit_tune(esn.states, target_data; train_frac=S.train_frac)
+	mach, y_train, y_train_std, y_test, y_test_std =
+				brr_fit_tune(esn.states, target_data; train_frac=S.train_frac)
 end
 
 end # module PPredict
