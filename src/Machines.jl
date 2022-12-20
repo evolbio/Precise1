@@ -1,10 +1,10 @@
 module Machines
-using DataFrames, MLJ, MLJParticleSwarmOptimization, Printf,
+using DataFrames, MLJ, MLJBase, MLJParticleSwarmOptimization, Printf,
 		Suppressor
 import MLJScikitLearnInterface: BayesianRidgeRegressor as BRR
 include("SKRidge.jl")
 using .SKRidge
-export brr_fit_tune, best, split_train_test
+export brr_fit_tune, best, split_train_test, r2_percent
 
 # esn states come with rows as features and columns as samples
 # mlj requires transpose of this setup
@@ -39,7 +39,7 @@ function brr_fit_tune(states::AbstractArray{Float64}, target::AbstractArray{Floa
 	# operation=predict_mode causes predictions to be deterministic {0,1} instead
 	# of probabilities on [0,1]
 	brr_tuned = TunedModel(model=brr,
-				  tuning=AdaptiveParticleSwarm(n_particles=30),	# Grid(resolution=4)
+				  tuning=AdaptiveParticleSwarm(n_particles=100),	# Grid(resolution=4)
 				  resampling=CV(nfolds=6),
 				  ranges=[r1,r2,r3,r4],
 				  measure=RootMeanSquaredError(),	# adjust if necessary
@@ -88,6 +88,16 @@ function best(mach; show_all=false)
 		@printf "%-13s = %-5s\n" "copy_X" bm.copy_X
 		@printf "%-13s = %-5s\n" "verbose" bm.verbose
 	end
+end
+
+# print R^2 as percentage
+function r2_percent(target_train, y_train, target_test, y_test)
+	r2_train = 1.0 - sum(abs2.(target_train .- y_train)) /
+							sum(abs2.(target_train .- mean(target_train)))
+	r2_test = 1.0 - sum(abs2.(target_test .- y_test)) /
+							sum(abs2.(target_test .- mean(target_test)))
+	@printf "r2_train = %4.1f%1s\n" 100*r2_train "%"
+	@printf "r2_test  = %4.1f%1s\n" 100*r2_test "%"
 end
 
 end # module Machines

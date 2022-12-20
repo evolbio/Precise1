@@ -18,6 +18,7 @@ function __init__()
 end
 
 # https://discourse.julialang.org/t/46131/6
+# https://github.com/cstjean/ScikitLearn.jl/issues/50#issuecomment-552071060
 function sk_brr(bm, X_train, X_test, y_train)
 	reg = BayesianRidge(alpha_1=bm.alpha_1, alpha_2=bm.alpha_2,
  							lambda_1=bm.lambda_1,lambda_2=bm.lambda_2)

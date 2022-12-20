@@ -5,15 +5,22 @@ using .Settings
 include("Machines.jl")
 using .Machines
 export Params
-export best
-export predict_driver
+export best, r2_percent
+export predict_driver, lorenz96_ly
 
 # see https://en.wikipedia.org/wiki/Lorenz_96_model
 # The Lorenz-96 model is predefined in DynamicalSystems.jl
 # add initial warmup period then cut it off
 # add final extra time for shift data, process it later
 # trajectory is a Dataset, convert to matrix
-function lorenz96(S::Params; fixed_init=S.fixed_init)
+function lorenz96(S::Params)
+	ds, u = lorenz96_sys(S)
+	trj = Matrix(trajectory(ds, S.T+S.warmup+S.shift, u; Δt = S.dt))
+	first_ind = Int(round(S.warmup/S.dt)+1)
+	return trj[first_ind:end,:]
+end
+
+function lorenz96_sys(S::Params; fixed_init=S.fixed_init)
 	if fixed_init
 		u = S.F * ones(S.N)
 		u[1] += 0.01					# small perturbation 
@@ -21,9 +28,12 @@ function lorenz96(S::Params; fixed_init=S.fixed_init)
 		u = S.F * rand(S.N)
 	end
 	ds = Systems.lorenz96(S.N, u; F = S.F)
-	trj = Matrix(trajectory(ds, S.T+S.warmup+S.shift, u; Δt = S.dt))
-	first_ind = Int(round(S.warmup/S.dt)+1)
-	return trj[first_ind:end,:]
+	return ds, u
+end
+
+function lorenz96_ly(S::Params)
+	ds, _ = lorenz96_sys(S)
+	ly = lyapunov(ds, 100000.0, Ttr=1000.0)
 end
 
 make_esn(S, input_data) = ESN(input_data;
@@ -65,8 +75,18 @@ function predict_driver(S)
 						y_test, y_test_std
 end
 
+# scale vectors so that target range is [min,max]
+function rescale!(t_train, t_test, y_train, y_test; min=-1.0, max=1.0)
+	minv=minimum(vcat(t_train,t_test))
+	rngv=maximum(vcat(t_train,t_test)) - minv
+	for xvec in (t_train, t_test, y_train, y_test)
+		map!(x -> (max-min)*(x-minv)/rngv + min, xvec, xvec)
+	end
+	return nothing
+end
+
 function plot_train_test(target_train, target_test, y_train, y_test)
-	pl=plot(size=(1500,900),layout=(2,1),legend=:none)
+	rescale!(target_train, target_test, y_train, y_test)
 	obs1 = Int(round((2/3)*length(target_test)))
 	obs2 = 2000
 	obs = obs1 > obs2 ? obs2 : obs1
@@ -74,6 +94,12 @@ function plot_train_test(target_train, target_test, y_train, y_test)
 	ind_test = length(target_test)-obs:length(target_test)
 	time_train = 0.01*ind_train
 	time_test = collect(0.01*ind_test) .+ maximum(time_train)
+	maxv=maximum(vcat(target_train[ind_train], target_test[ind_test],
+							y_train[ind_train], y_test[ind_test]))
+	minv=minimum(vcat(target_train[ind_train], target_test[ind_test],
+							y_train[ind_train], y_test[ind_test]))
+	maxp=maximum(abs.([minv,maxv]))
+	pl=plot(size=(1500,900),layout=(2,1),legend=:none,yrange=(-maxp,maxp))
 	plot!(time_train,target_train[ind_train])
 	plot!(time_train,y_train[ind_train])
 	plot!(time_test,target_test[ind_test],subplot=2)
