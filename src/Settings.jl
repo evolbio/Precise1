@@ -24,6 +24,9 @@ input_sparsity = 0.15	# default is 0.1, if 1.0, then inputs goes to all res node
 shift = 0.5				# goal to predict first trajectory dim shift units into future
 train_frac = 0.7		# split of data into training and testing
 
+# convenience items
+run_num = 1				# store run number within experiment for filename saving
+
 end	#struct
 
 end # module Settings
