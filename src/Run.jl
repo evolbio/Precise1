@@ -14,6 +14,21 @@ best(d.mach)
 r2_percent_print(target_train,y_train,target_test,y_test)
 println("Lyapunov exp = ", lorenz96_ly(S.N, S.F))
 
+# run exp
+using JLD2
+run_exp()
+d = read_data();
+jldsave("/Users/steve/Desktop/d.jld2"; d)
+
+# if already saved, can reload
+d=load("/Users/steve/Desktop/d.jld2")["d"];
+
+pl=plot_by_trt(d;show_points=false)
+
+# save fig
+using Plots
+savefig(pl, "/Users/steve/Desktop/fig.pdf")
+
 # sort params from factorial design
 using Printf
 function calc_ly()

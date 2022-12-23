@@ -1,8 +1,9 @@
-output*/
+output*
 notes
 *.ooutline
 *.bbprojectd
 statprof
 tmp
+temp
 plots
 analysis
