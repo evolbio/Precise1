@@ -41,7 +41,7 @@ end
 
 function run_exp()
 	#S_exp = exp_param(N=[5], res_size=[25], shift=[0.5, 1.0], T=3000.0)
-	S_exp = exp_param(N=[5],res_size=[200],T=20000.0)
+	S_exp = exp_param(N=[5],res_size=[100],T=20000.0)
 	start_time = Dates.format(now(),"yyyymmdd_HHMMSS")
 	path = "/Users/steve/sim/zzOtherLang/julia/projects/Precise/PPredict/output/" *
 					start_time * "_"

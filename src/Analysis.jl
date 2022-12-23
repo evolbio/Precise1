@@ -1,5 +1,5 @@
 module Analysis
-using PPredict, Plots, JLD2, Dierckx
+using PPredict, Plots, JLD2, Dierckx, Printf, Plots.PlotMeasures
 export read_data, split_data, plot_by_trt, split_shift
 
 ####################################################################
@@ -75,7 +75,9 @@ function plot_by_trt(d=nothing; show_points=false)
 	by_trt = split_data(d)
 	N_num = size(by_trt)[1]
 	res_num = size(by_trt)[2]	
-	pl = plot(layout=(res_num,N_num), size=(800*N_num,500*res_num), legend=:none)
+	leg_labels = [@sprintf("%4.2f",x) for x in sort(unique(d[4,:]))]
+	pl = plot(layout=(res_num,N_num), size=(800*N_num,400*res_num),
+				ylim=(7,100),left_margin=7mm)
 	for i in 1:N_num
 		for j in 1:res_num
 			by_shift = split_shift(by_trt[i,j])
@@ -85,13 +87,20 @@ function plot_by_trt(d=nothing; show_points=false)
 				step = (mx-mn)/8.0
 				rng = mn:step:mx
 				interp = Spline1D(s[5,:],s[7,:];k=1,s=0.0)
-				if show_points scatter!(s[5,:],s[7,:],subplot=1 + (i-1) + (j-1)*N_num,
+				subp = 1 + (i-1) + (j-1)*N_num
+				leg = subp == 1 ? true : false
+				if show_points scatter!(s[5,:],s[7,:],subplot=subp,
 						color=mma[k]) end
-				plot!(rng,interp.(rng),subplot=1 + (i-1) + (j-1)*N_num,
-						color=mma[k], linewidth=2)
+				plot!(rng,interp.(rng),subplot=subp, color=mma[k], linewidth=2,
+						legend=leg, label=leg_labels[k])
+				annotate!(1.3, 30, ("res_size = $(Int(s[3,1]))",11, :center, :center), 
+						subplot=subp)
 			end
 		end
 	end
+	annotate!(0.58, 100, ("shift",11, :center, :center),subplot=1)
+	xlabel!("Deviation doubling time", xguidefontsize=12, subplot=3)
+	ylabel!("R-squared", yguidefontsize=12)
 	display(pl)
 	return pl
 end
