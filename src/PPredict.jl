@@ -78,9 +78,10 @@ end
 # trajectory is a Dataset, convert to matrix
 function lorenz96(S::Params)
 	ds, u = lorenz96_sys(S.N, S.F)
-	trj = Matrix(trajectory(ds, S.T+S.warmup+S.shift, u; Δt = S.dt))
+	trj, tvec = trajectory(ds, S.T+S.warmup+S.shift, u; Δt = S.dt)
+	trj_matrix = Matrix(trj)
 	first_ind = Int(round(S.warmup/S.dt)+1)
-	return trj[first_ind:end,:]
+	return trj_matrix[first_ind:end,:]
 end
 
 function lorenz96_sys(N, F; fixed_init=false)

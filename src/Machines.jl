@@ -2,8 +2,11 @@ module Machines
 using DataFrames, MLJ, MLJBase, MLJParticleSwarmOptimization, Printf,
 		Suppressor
 import MLJScikitLearnInterface: BayesianRidgeRegressor as BRR
-include("SKRidge.jl")
-using .SKRidge
+# stop usage of SKRidge module, was used to calc std for Ridge Regress,
+# but std was not useful and was not used, so commenting out
+# because causes compile errors in newer Julia version
+# include("SKRidge.jl")
+# using .SKRidge
 export brr_fit_tune, best, split_train_test, r2_percent, r2_percent_print
 
 # esn states come with rows as features and columns as samples
@@ -57,11 +60,13 @@ function brr_fit_tune(states::AbstractArray{Float64}, target::AbstractArray{Floa
 	y_train = predict(mach, X[train,:])
 	y_test = train_frac < 1.0 ? predict(mach, X[test,:]) : nothing
 	# now do same fit and predict via ScikitLearn to get std dev of predictions
-	y_train2, y_train_std, y_test2, y_test_std = SKRidge.sk_brr(report(mach).best_model,
-						Matrix(X[train,:]), Matrix(X[test,:]), y[train])
+	# not used since updating julia because cannot compile, see top of file
+	# y_train2, y_train_std, y_test2, y_test_std = SKRidge.sk_brr(report(mach).best_model,
+	#					Matrix(X[train,:]), Matrix(X[test,:]), y[train])
 	# check that direct call to ScikitLearn gives same predicted values
-	@assert y_train==y_train2
-	@assert y_test==y_test2
+	# @assert y_train==y_train2
+	# @assert y_test==y_test2
+	y_train_std = y_test_std = 0.0
 	return mach, y_train, y_train_std, y_test, y_test_std
 end
 
