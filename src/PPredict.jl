@@ -71,17 +71,12 @@ function distn_r2_test(;n=2, seed=0, T=5000.0, res_size=[25])
 	S_exp = exp_param(N=[5],F=[8.75],res_size=res_size,shift=[1.0],T=T)
 	len = length(S_exp)
 	distn = zeros(n,len)
-	seeds = rand(UInt64,n,len)
-	lk = ReentrantLock()
-	# could not get threads to work, may be a python issue??
-	for (j,i) in collect(Iterators.product(1:len,1:n))
-		#println("Starting sample ", j, " in set ", i)
-		Random.seed!(seeds[i,j])
-		d=predict_driver(S_exp[j])
-		exp_stats=calc_stats(d.S,d.mach,d.target_train,d.y_train,
-								d.target_test,d.y_test)
-		println("Writing sample ", j, " in size ", i)
-		lock(lk) do
+	for j in 1:len
+		for i in 1:n
+			d=predict_driver(S_exp[j])
+			exp_stats=calc_stats(d.S,d.mach,d.target_train,d.y_train,
+									d.target_test,d.y_test)
+			println("Writing sample ", i, " in size ", j)
 			distn[i,j] = exp_stats.r2_test
 		end
 	end

@@ -59,8 +59,8 @@ display(pl)
 # returns matrix with rows as samples and cols as res_size values
 using Serialization
 f="/Users/steve/sim/zzOtherLang/julia/projects/Precise/PPredict/output/00_r2_distn"
-r2_distn_orig = PPredict.distn_r2_test(seed=7019109242897849223,n=3,T=20000.0,
-				res_size=[25 50]);
+r2_distn_orig = PPredict.distn_r2_test(seed=7019109242897849223,n=20,T=20000.0,
+				res_size=[25 50 100]);
 serialize(f,r2_distn_orig);
 # recall data
 r2_distn = deserialize(f);
