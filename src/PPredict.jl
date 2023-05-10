@@ -1,5 +1,5 @@
 module PPredict
-using ReservoirComputing, DynamicalSystems, Plots, JLD2, MLJ, Dates, Printf
+using ReservoirComputing, DynamicalSystems, Plots, JLD2, MLJ, Dates, Printf, Random
 include("Settings.jl")
 using .Settings
 include("Machines.jl")
@@ -62,6 +62,30 @@ function exp_param(;N=[5 10], F=7.8*rng(0.01,12,4), res_size=[25 50 100 200],
 		S_exp[i] = Params(S; run_num=i)
 	end
 	return S_exp
+end
+
+# use to generate r2_test distn for article
+# could not get threads to work, may be python issue
+function distn_r2_test(;n=2, seed=0, T=5000.0, res_size=[25])
+	if seed != 0 Random.seed!(seed) end
+	S_exp = exp_param(N=[5],F=[8.75],res_size=res_size,shift=[1.0],T=T)
+	len = length(S_exp)
+	distn = zeros(n,len)
+	seeds = rand(UInt64,n,len)
+	lk = ReentrantLock()
+	# could not get threads to work, may be a python issue??
+	for (j,i) in collect(Iterators.product(1:len,1:n))
+		#println("Starting sample ", j, " in set ", i)
+		Random.seed!(seeds[i,j])
+		d=predict_driver(S_exp[j])
+		exp_stats=calc_stats(d.S,d.mach,d.target_train,d.y_train,
+								d.target_test,d.y_test)
+		println("Writing sample ", j, " in size ", i)
+		lock(lk) do
+			distn[i,j] = exp_stats.r2_test
+		end
+	end
+	return distn
 end
 
 function calc_stats(S, mach, target_train, y_train, target_test, y_test)

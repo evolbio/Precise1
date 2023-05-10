@@ -52,3 +52,22 @@ trj = PPredict.lorenz96(S);
 pl=plot(size=(1500,900),legend=:none)
 for i in 1:3 plot!(trj[:,i]) end
 display(pl)
+
+# calc distribution of r2_test values for given set of parameters
+# N=5 and F=8.75 gives dbl close to 1.0, use shift=1.0, T=20000.0
+# check for res = [25 50 100], sample of n=20
+# returns matrix with rows as samples and cols as res_size values
+using Serialization
+f="/Users/steve/sim/zzOtherLang/julia/projects/Precise/PPredict/output/00_r2_distn"
+r2_distn_orig = PPredict.distn_r2_test(seed=7019109242897849223,n=3,T=20000.0,
+				res_size=[25 50]);
+serialize(f,r2_distn_orig);
+# recall data
+r2_distn = deserialize(f);
+using Statistics
+for i in 1:size(r2_distn)[2]
+	println(minimum(r2_distn[:,i]), " ", maximum(r2_distn[:,i]))
+	println(mean(r2_distn[:,i]), " ", std(r2_distn[:,i]))
+	println()
+end
+
