@@ -70,4 +70,10 @@ for i in 1:size(r2_distn)[2]
 	println(mean(r2_distn[:,i]), " ", std(r2_distn[:,i]))
 	println()
 end
+for i in 1:size(r2_distn)[2]
+	println(minimum(r2_distn[:,i]), " ", median(r2_distn[:,i]), " ", 
+			maximum(r2_distn[:,i]))
+	println()
+end
+
 
