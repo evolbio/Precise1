@@ -31,7 +31,7 @@ savefig(pl, "/Users/steve/Desktop/fig.pdf")
 
 # sort params from factorial design
 using Printf
-function calc_ly()
+function calc_ly_alt()
 	S_exp = PPredict.exp_param(;N=[10], F=4.7*PPredict.rng(0.005,25,4))
 	S_unique = union([(N=x.N, F=x.F) for x in S_exp])
 	result = []
@@ -76,4 +76,14 @@ for i in 1:size(r2_distn)[2]
 	println()
 end
 
+# make plot of lyapunov exponent vs F for N=5
+# increasing mult gives more accurate result and smooths plot
+# decreasing incr gives greater resolution
+incr=0.01
+F, ly = calc_ly(4.8:incr:18; mult=4.0);
+pl=plot(F,ly,legend=false,xlabel="F",ylabel="Lyapunov exponent",xticks=5:3:17)
+savefig(pl,"/Users/steve/Desktop/ly.pdf")
 
+# timing benchmark for a single run, use different shift values
+using BenchmarkTools
+@btime PPredict.run_exp_timing(res_size=[50],shift=[0.50],T=20000.0)

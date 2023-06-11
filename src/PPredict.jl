@@ -8,7 +8,7 @@ include("Analysis.jl")
 using .Analysis
 export Params
 export best, r2_percent, r2_percent_print
-export predict_driver, lorenz96_ly, data, stats, calc_stats, run_exp
+export predict_driver, lorenz96_ly, data, stats, calc_stats, calc_ly, run_exp
 export read_data, split_data, plot_by_trt, split_shift
 
 ####################################################################
@@ -51,6 +51,14 @@ function run_exp()
 		exp_data=predict_driver(S; save_fig=cpath * ".pdf")
 		#jldsave(cpath*".jld2"; exp_data; compress=true) # with compression, but is slow
 		jldsave(cpath*".jld2"; exp_data)
+	end
+end
+
+# use this to benchmark runs, usually for a single parameter combo
+function run_exp_timing(;N=[5],F=[8.442970848],res_size=[25],shift=[0.50],T=20000.0)
+	S_exp = exp_param(N=N,F=F,res_size=res_size,shift=shift,T=T)
+	for S in S_exp
+		exp_data=predict_driver(S; save_fig="/Users/steve/Desktop/test.pdf")
 	end
 end
 
@@ -114,14 +122,36 @@ function lorenz96_sys(N, F; fixed_init=false)
 	return ds, u
 end
 
-function lorenz96_ly(N, F)
+function lorenz96_ly(N, F; mult=1.0)
 	ds, _ = lorenz96_sys(N, F)
-	lyapunov(ds, 100000.0, Ttr=1000.0)
+	lyapunov(ds, 100000.0*mult, Ttr=1000.0*mult)
 end
 
 ly2doubling(ly) = abs(log(2)/ly)
 rng_2(b,n) = b .^ (0:n-1)
 rng(inc,n,s) = (1:inc:1+(n-1)*inc) .^ s
+
+function calc_ly(rng; print=false, mult=1.0)
+	S_exp = exp_param(;N=[5], F=collect(rng))
+	S_unique = union([(N=x.N, F=x.F) for x in S_exp])
+	result = []
+	Threads.@threads for s in S_unique
+		lyap=lorenz96_ly(s.N,s.F; mult=mult)
+		if lyap isa Number
+			push!(result, (N=s.N, F=s.F, ly=lyap))
+		end
+	end
+	sort!(result, by = x -> x.F)
+	if print
+		for s in result
+			d = (abs(s.ly) < 1e-2 ? 0.0 : log(2)/s.ly)
+			@printf "N=%2d F=%5.2f ly=%5.2f d=%5.2f\n" s.N s.F s.ly d
+		end
+	end
+	F = [x.F for x in result]
+	ly = [x.ly for x in result]
+	return F, ly
+end
 
 make_esn(S, input_data) = ESN(input_data;
     	reservoir = RandSparseReservoir(S.res_size, radius=S.res_radius, 
