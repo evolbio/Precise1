@@ -87,3 +87,46 @@ savefig(pl,"/Users/steve/Desktop/ly.pdf")
 # timing benchmark for a single run, use different shift values
 using BenchmarkTools
 @btime PPredict.run_exp_timing(res_size=[50],shift=[0.50],T=20000.0)
+
+# get doubling values used in figure
+fff=PPredict.rng(0.01,12,4)*7.8;
+PPredict.ly2doubling.(lorenz96_ly.(5,fff))
+
+# make figure analyzing effect of increasing res_size for various parameter combos
+# full experiment
+run_exp(F=[8.116711278 11.840949198],res_size=[25 50 100 200 400 800],
+			shift=[1.0 2.0],T=20000.0)
+# break into 4 parts to run on different machines for speedup
+run_exp(F=[8.116711278],res_size=[25 50 100 200 400 800],	# local
+			shift=[1.0],T=20000.0)
+run_exp(F=[8.116711278],res_size=[25 50 100 200 400 800],	# alice
+			shift=[2.0],T=20000.0)
+run_exp(F=[11.840949198],res_size=[25 50 100 200 400 800],	# fisher
+			shift=[1.0],T=20000.0)
+run_exp(F=[11.840949198],res_size=[25 50 100 200 400 800],	# local round 2
+			shift=[2.0],T=20000.0)
+
+# collect data for R2_ts by hand from pdf plot for each parameter combination
+# first row is res_size
+# second row is F=8.12,  dbl = 1.42, shift = 1.0
+# third  row is F=8.12,  dbl = 1.42, shift = 2.0
+# fourth row is F=11.84, dbl = 0.52, shift = 1.0
+# fifth  row is F=11.84, dbl = 0.52, shift = 2.0
+rsize = [25   50   100  200  400  800;
+         73.6 77.5 81.7 86.8 90.5 94.0;
+         58.5 65.5 70.7 77.0 80.9 84.5;
+         24.0 28.5 35.3 38.9 44.6 48.1;
+         11.5 14.2 14.7 18.8 22.0 24.6];
+xtck = [25;50;100;200;400;800];
+wdth = 1.5;
+clr = PPredict.Analysis.mma;
+pl=plot(rsize[1,:], rsize[2,:], color=clr[3], label="dbl_hi, shift_lo",
+			xscale=:log2, yrange=(10,100), xticks=(xtck,string.(xtck)), linewidth=wdth,
+			xlabel="Reservoir size", ylabel="R-squared", legend_position=:topleft)
+plot!(rsize[1,:], rsize[3,:], color=clr[4], label="dbl_hi, shift_hi", linewidth=wdth)
+plot!(rsize[1,:], rsize[4,:], color=clr[3], label="dbl_lo, shift_lo", linewidth=wdth,
+		style=:dash)
+plot!(rsize[1,:], rsize[5,:], color=clr[4], label="dbl_lo, shift_hi", linewidth=wdth,
+		style=:dash)
+
+savefig(pl, "/Users/steve/Desktop/res_size.pdf")

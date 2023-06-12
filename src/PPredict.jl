@@ -39,9 +39,10 @@ struct data
 	y_test_std
 end
 
-function run_exp()
+function run_exp(;N=[5], F=7.8*rng(0.01,12,4), res_size=[25 50 100],
+				shift = [0.25 0.5 1.0 2.0], T=20000.0)
 	#S_exp = exp_param(N=[5], res_size=[25], shift=[0.5, 1.0], T=3000.0)
-	S_exp = exp_param(N=[5],res_size=[100],T=20000.0)
+	S_exp = exp_param(N=N,F=F,res_size=res_size,shift=shift,T=T)
 	start_time = Dates.format(now(),"yyyymmdd_HHMMSS")
 	path = "/Users/steve/sim/zzOtherLang/julia/projects/Precise/PPredict/output/" *
 					start_time * "_"
